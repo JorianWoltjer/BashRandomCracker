@@ -17,9 +17,9 @@ fn main() {
     loop {
         let mut rng = Random::new(i, true);
 
-        if rng.next() == r1 && rng.next() == r2 && rng.next() == r3 {
+        if rng.next_16() == r1 && rng.next_16() == r2 && rng.next_16() == r3 {
             println!("Found seed: {}", i);
-            println!("Next 3 values: [{}, {}, {}]", rng.next(), rng.next(), rng.next());
+            println!("Next 3 values: [{}, {}, {}]", rng.next_16(), rng.next_16(), rng.next_16());
             break;
         }
 

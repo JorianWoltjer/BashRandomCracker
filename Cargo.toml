@@ -8,7 +8,7 @@ description = "Crack Bash's $RANDOM variable with 2-3 samples"
 readme = "README.md"
 homepage = "https://github.com/JorianWoltjer/BashRandomCracker"
 repository = "https://github.com/JorianWoltjer/BashRandomCracker"
-keywords = ["bash", "rng", "brute-force", "random", "crypto", "algorithm"]
+keywords = ["bash", "rng", "brute-force", "random", "algorithm"]
 categories = ["command-line-utilities"]
 
 [dependencies]

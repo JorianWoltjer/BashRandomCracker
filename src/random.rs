@@ -1,25 +1,25 @@
-const BASH_RAND_MAX: u16 = 0x7fff;  // 16 bits
+pub const BASH_RAND_MAX: u16 = 0x7fff; // 16 bits
 
 pub struct Random {
     seed: u32,
     last: u16,
-    /// If true, use the legacy algorithm from bash 5.0 and earlier (check with `bash --version`)
-    legacy: bool,
+    /// If true, use the old algorithm from bash 5.0 and earlier (check with `bash --version`)
+    old: bool,
 }
 impl Random {
     #[inline]
-    pub fn new(seed: u32, legacy: bool) -> Self {
+    pub fn new(seed: u32, old: bool) -> Self {
         // TODO: support `long` seed input
-        Self { seed, last: 0, legacy }
+        Self { seed, last: 0, old }
     }
 
     pub fn next_16(&mut self) -> u16 {
         self.seed = self.next_32();
 
-        let result = if self.legacy { 
+        let result = if self.old {
             // Bash 5.0 and earlier
             self.seed as u16 & BASH_RAND_MAX
-        } else { 
+        } else {
             // Bash 5.1 and later
             ((self.seed >> 16) ^ (self.seed & 0xffff)) as u16 & BASH_RAND_MAX
         };
@@ -47,7 +47,9 @@ impl Random {
     }
 
     fn next_32(&mut self) -> u32 {
-        if self.seed == 0 { self.seed = 123459876; }
+        if self.seed == 0 {
+            self.seed = 123459876;
+        }
         let h: i32 = self.seed as i32 / 127773;
         let l: i32 = self.seed as i32 - (127773 * h);
         let t: i32 = 16807 * l - 2836 * h;

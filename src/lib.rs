@@ -1,10 +1,15 @@
+use std::error::Error;
+
 use crossbeam_channel::Sender;
 use rayon::prelude::*;
 
 use random::Random;
 
 pub mod cli;
+pub mod log;
 pub mod random;
+
+pub type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
 pub trait CertainCracker {
     fn new(target: [u16; 3]) -> Self;

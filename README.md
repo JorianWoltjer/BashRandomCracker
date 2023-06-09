@@ -18,7 +18,8 @@ $ RANDOM=1337; echo $RANDOM $RANDOM $RANDOM
 24879 21848 15683
 ```
 
-There are **2 different calculations** depending on your **bash version**, which may make one seed give two different outputs. All versions *>= 5.1* will add an extra step, and to this tool, are considered the "new" versions, while any lower versions are considered "old". This can be set explicitly using the `--version` (`-v`) argument in this tool, or otherwise, it will simply try both. 
+There are **2 different calculations** depending on your **bash version**, which may make one seed give two different outputs.  
+All versions *>= 5.1* will add a small extra step, and to this tool, are considered the "new" versions, while any lower versions are considered "old". This can be set explicitly using the `--version` (`-v`) argument in this tool, or otherwise, it will simply try both. 
 
 ## Example
 
@@ -48,9 +49,7 @@ exit
 
 ## Usage
 
-Use `bashrand crack` and provide 2-3 `$RANDOM` variables for it to brute-force the seed. Afterward, you can use `bashrand get` to get an arbitrary part of the sequence in advance, providing the seed found in the first step. See [Example](#example) for an example usage. 
-
-#### Help
+Use `bashrand crack` and provide 2-3 `$RANDOM` variables for it to brute-force the seed. Afterward, you can use `bashrand get` to get an arbitrary part of the sequence in advance, providing the seed found in the first step. See example above as well. 
 
 ```Shell
 $ bashrand --help

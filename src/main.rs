@@ -1,7 +1,9 @@
 
 use std::env::args;
 
-use bash_randcrack::Random;
+use bash_randcrack::{Cracker, random::Random, LegacyCracker, NewCracker};
+
+const LEGACY: bool = true;
 
 fn main() {
     let mut args = args();
@@ -12,17 +14,19 @@ fn main() {
     let r3 = args.next().unwrap().parse().unwrap();
 
     // TODO: check if less than 2^15
+    // TODO: make clap arguments for infinite values and legacy mode, and no stop on first match
+    // TODO: by default, try non-legacy mode first, then legacy mode if no match
 
-    let mut i = 0;
-    loop {
-        let mut rng = Random::new(i, true);
-
-        if rng.next_16() == r1 && rng.next_16() == r2 && rng.next_16() == r3 {
-            println!("Found seed: {}", i);
-            println!("Next 3 values: [{}, {}, {}]", rng.next_16(), rng.next_16(), rng.next_16());
-            break;
-        }
-
-        i += 1;
-    }
+    let seed = if LEGACY { 
+        let cracker = LegacyCracker::new([r1, r2, r3]);
+        cracker.find().expect("Failed to find seed")
+    } else {
+        let cracker = NewCracker::new([r1, r2, r3]);
+        cracker.find().expect("Failed to find seed")
+    };
+    println!("Found seed: {seed}");
+    
+    let mut rng = Random::new(seed, LEGACY);
+    rng.skip(3);
+    println!("Next 3 values: {:?}", rng.next_16_n(3));
 }

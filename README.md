@@ -1,6 +1,6 @@
 # Bash `$RANDOM` Cracker
 
-A tool to brute-force the internal seed of Bash's `$RANDOM` variable after only 2-3 15-bit samples. Able to predict all future values to break the randomness. 
+A tool to brute-force the internal seed of Bash's `$RANDOM` variable after only 2-3 samples, in seconds. Able to predict all future values to break the randomness. 
 
 For context, the `bash` shell has a dynamic variable called `$RANDOM` you can access at any time to receive a random 15-bit number:
 
@@ -20,22 +20,35 @@ $ RANDOM=1337; echo $RANDOM $RANDOM $RANDOM
 
 There are **2 different calculations** depending on your **bash version**, which may make one seed give two different outputs. All versions *>= 5.1* will add an extra step, and to this tool are considered the "new" versions, while any lower versions are considered "old". This can be set explicitly using the `--version` (`-v`) argument in this tool, or otherwise it will simply try both. 
 
-## Usage
+## Example
 
-<!-- TODO: asciinema recording -->
+```Shell
+$ bashrand crack -n 3 $RANDOM $RANDOM $RANDOM
+Seed: 2137070299 +3 (old)
+  Next 3 values: [22404, 16453, 2365]
+$ echo $RANDOM $RANDOM $RANDOM
+22404 16453 2365
+```
+
+[![Bash $RANDOM Cracker - Showcase](https://asciinema.org/a/sa9iP4ZGtIMQdq2dl4Qv5Ga01.svg)](https://asciinema.org/a/sa9iP4ZGtIMQdq2dl4Qv5Ga01?autoplay=1)
 
 <!-- 
 bash --version
 echo $RANDOM $RANDOM $RANDOM
-bashrand crack 664 2679 3415
+bashrand crack 12077 14368
+bashrand crack 12077 14368 25452
 echo $RANDOM $RANDOM $RANDOM
-bashrand get 892556151
-bashrand get 892556151 -v old
-bashrand get 892556151 -v old -s 6
-bashrand get 892556151 -v old -s 6 -n 3
+bashrand get 1687126207
+bashrand get 1687126207 -v old
+bashrand get 1687126207 -v old -s 6
+bashrand get 1687126207 -v old -s 6 -n 3
 echo $RANDOM $RANDOM $RANDOM
 exit
  -->
+
+## Usage
+
+Use `bashrand crack` and provide 2-3 `$RANDOM` variables for it to brute-force the seed. Afterwards, you can use `bashrand get` to get an arbitrary part of the sequence in advance, providing the seed found in the first step. See [Example](#example) for an example usage. 
 
 #### Help
 
@@ -71,10 +84,10 @@ Options:
 $ bashrand crack --help
 Provide random numbers to brute-force the seed
 
-Usage: bashrand crack [OPTIONS] [NUMBERS] [NUMBERS]...
+Usage: bashrand crack [OPTIONS] <NUMBERS> <NUMBERS>...
 
 Arguments:
-  [NUMBERS] [NUMBERS]...
+  <NUMBERS> <NUMBERS>...
           2-3 $RANDOM numbers as input for brute-forcing the seed
 
           2 => multiple possible seeds, 3 => single seed

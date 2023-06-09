@@ -7,7 +7,6 @@ pub struct Random {
     old: bool,
 }
 impl Random {
-    #[inline]
     pub fn new(seed: u32, old: bool) -> Self {
         // TODO: support `long` seed input
         Self { seed, last: 0, old }

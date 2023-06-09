@@ -23,7 +23,7 @@ pub enum SubCommands {
         /// 2-3 $RANDOM numbers as input for brute-forcing the seed
         ///
         /// 2 => multiple possible seeds, 3 => single seed
-        #[clap(num_args = 2..=3)]
+        #[clap(num_args = 2..=3, required = true)]
         numbers: Vec<String>,
     },
 

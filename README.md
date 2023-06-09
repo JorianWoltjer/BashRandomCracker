@@ -18,7 +18,7 @@ $ RANDOM=1337; echo $RANDOM $RANDOM $RANDOM
 24879 21848 15683
 ```
 
-There are **2 different calculations** depending on your **bash version**, which may make one seed give two different outputs. All versions *>= 5.1* will add an extra step, and to this tool are considered the "new" versions, while any lower versions are considered "old". This can be set explicitly using the `--version` (`-v`) argument in this tool, or otherwise it will simply try both. 
+There are **2 different calculations** depending on your **bash version**, which may make one seed give two different outputs. All versions *>= 5.1* will add an extra step, and to this tool, are considered the "new" versions, while any lower versions are considered "old". This can be set explicitly using the `--version` (`-v`) argument in this tool, or otherwise, it will simply try both. 
 
 ## Example
 
@@ -48,7 +48,7 @@ exit
 
 ## Usage
 
-Use `bashrand crack` and provide 2-3 `$RANDOM` variables for it to brute-force the seed. Afterwards, you can use `bashrand get` to get an arbitrary part of the sequence in advance, providing the seed found in the first step. See [Example](#example) for an example usage. 
+Use `bashrand crack` and provide 2-3 `$RANDOM` variables for it to brute-force the seed. Afterward, you can use `bashrand get` to get an arbitrary part of the sequence in advance, providing the seed found in the first step. See [Example](#example) for an example usage. 
 
 #### Help
 
@@ -106,30 +106,68 @@ Arguments:
 
 ## Installation
 
+```Bash
+cargo install bashrand
+```
 
+Or **download** and **extract** a pre-compiled binary from the [Releases](https://github.com/JorianWoltjer/BashRandomCracker/releases) page. 
 
-## Reverse Engineering
+## Reverse Engineering (How?)
 
-To implement the `$RANDOM` algorithm, the first requirement is understanding the algorithm. Luckily Bash is open-source meaning all the clear and documented code is available. I used [this repository](https://github.com/bminor/bash) to look for anything related to the generation of this variable, and found the definition here:
+To implement the `$RANDOM` algorithm, the first requirement is understanding the algorithm. Luckily Bash is open-source meaning all the clear and documented code is available. I used [this repository](https://github.com/bminor/bash) to look for anything related to the generation of this variable, and found the definition [here](https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/variables.c#L1914):
 
-https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/variables.c#L1914
+```C
+INIT_DYNAMIC_VAR ("RANDOM", (char *)NULL, get_random, assign_random);
+```
 
 It assigns two functions to the variable: [`get_random()`](https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/variables.c#L1443-L1450) and [`assign_random`](https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/variables.c#L1401-L1420). The first is when you access the variable like `echo $RANDOM`, and the second is for when you assign a value yourself to the variable, like `RANDOM=1337`. 
 
-`get_random()` is the most interesting as we want to predict its output. It calls the a [`get_random_number()`](https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/variables.c#L1422C1-L1440) function which itself calls [`brand()`](https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/lib/sh/random.c#L98C1-L112) inside the `/lib/sh/random.c` file. Here it starts to get interesting:
+`get_random()` is the most interesting as we want to predict its output. It calls the [`get_random_number()`](https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/variables.c#L1422C1-L1440) function which itself calls [`brand()`](https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/lib/sh/random.c#L98C1-L112) inside the `/lib/sh/random.c` file. Here it starts to get interesting:
 
-https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/lib/sh/random.c#L98C1-L112
+```C
+#define BASH_RAND_MAX 32767   /* 0x7fff - 16 bits */
+
+/* Returns a pseudo-random number between 0 and 32767. */
+int brand () {
+  unsigned int ret;
+
+  rseed = intrand32 (rseed);
+  if (shell_compatibility_level > 50)
+    ret = (rseed >> 16) ^ (rseed & 65535);
+  else
+    ret = rseed;
+  return (ret & BASH_RAND_MAX);
+}
+```
 
 First, notice the `BASH_RAND_MAX` variable that is a 15-bit mask over the output. Also the `shell_compatibility_level` is the bash version, meaning if it is greater than version 50 (5.0) it will use a slightly different calculation. In both cases however it first gets a random number from [`intrand32()`](https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/lib/sh/random.c#L55-L84), and that already contains the core of the algorithm!
 
-https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/lib/sh/random.c#L73-L83
+```C
+bits32_t h, l, t;
+u_bits32_t ret;
+
+/* Can't seed with 0. */
+ret = (last == 0) ? 123459876 : last;
+h = ret / 127773;
+l = ret - (127773 * h);
+t = 16807 * l - 2836 * h;
+ret = (t < 0) ? t + 0x7fffffff : t;
+
+return (ret);
+```
 
 These are some simple calculations that we can recreate in any programming language. Importantly, it uses a `last` variable as its only argument in the calculation, which is given by `rseed = intrand32(rseed)` in the calling function. This means there is an internal seed that is iterated every time this function is called. If we can sync up with this seed, we will be able to predict any future values by copying the algorithm. 
 
-The initial seed value is [complicated](https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/lib/sh/random.c#L87-L96), and is calculated with a lot unpredictable data. If you remember it was also possible to *set* the seed, using [`assign_random()`](https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/variables.c#L1401-L1420). Looking at this function, it takes the value we set it to, and passes it to [`sbrand()`](https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/lib/sh/random.c#L115-L121), a very simple function that simply sets the seed directly to the provided value:
+The initial seed value is [complicated](https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/lib/sh/random.c#L87-L96), and is calculated with a lot of unpredictable data. If you remember it was also possible to *set* the seed, using [`assign_random()`](https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/variables.c#L1401-L1420). Looking at this function, it takes the value we set it to, and passes it to [`sbrand()`](https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/lib/sh/random.c#L115-L121), a very simple function that simply sets the seed directly to the provided value:
 
-https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/lib/sh/random.c#L115-L121
+```C
+/* Set the random number generator seed to SEED. */
+void sbrand (seed) unsigned long seed; {
+  rseed = seed;
+  last_random_value = 0;
+}
+```
 
-So in theory if the seed was set manually, we could now simply try many seeds until we find one that matches the output. But what about seeds that aren't set manually? This case happens a lot more often. Luckily, the internal seed is an integer of only **32 bits**, easily brute-forcable with such a fast algorithm. After some testing we can find the search space is actually only 30 bits for the newer bash versions, and 31 bits for old bash versions. 
+So in theory, if the seed was set manually, we could now simply try many seeds until we find one that matches the output. But what about seeds that aren't set manually? This case happens a lot more often. Luckily, the internal seed is an integer of only **32 bits**, easily brute-forcible with such a fast algorithm. After some testing, we can find the search space is actually only 30 bits for the newer bash versions and 31 bits for old bash versions. 
 
 This program implements this brute-force method to search through the whole space in a few seconds, and shows the found seeds together with future values it predicts. 

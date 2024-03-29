@@ -58,9 +58,11 @@ Bash $RANDOM Cracker
 Usage: bashrand [OPTIONS] <COMMAND>
 
 Commands:
-  crack  Provide random numbers to brute-force the seed
-  get    Get random numbers from a seed
-  help   Print this message or the help of the given subcommand(s)
+  crack    Provide random numbers to brute-force the seed
+  get      Get random numbers from a seed
+  seeds    Get next N seeds from a seed
+  collide  Find a seed where both old and new versions are the same
+  help     Print this message or the help of the given subcommand(s)
 
 Options:
   -v, --version <VERSION>
@@ -103,6 +105,8 @@ Arguments:
           Seed to use for generating random numbers
 ```
 
+The subcommands `seeds` and `collide` are for more advanced use, check them out if you want to.
+
 ## Installation
 
 ```Bash
@@ -111,7 +115,7 @@ cargo install bashrand
 
 Or **download** and **extract** a pre-compiled binary from the [Releases](https://github.com/JorianWoltjer/BashRandomCracker/releases) page. 
 
-## Reverse Engineering (How?)
+## Reverse Engineering (How?!)
 
 To implement the `$RANDOM` algorithm, the first requirement is understanding the algorithm. Luckily Bash is open-source meaning all the clear and documented code is available. I used [this repository](https://github.com/bminor/bash) to look for anything related to the generation of this variable, and found the definition [here](https://github.com/bminor/bash/blob/ec8113b9861375e4e17b3307372569d429dec814/variables.c#L1914):
 

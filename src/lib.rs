@@ -11,19 +11,19 @@ pub mod random;
 
 pub type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
-pub trait CertainCracker {
-    fn new(target: [u16; 3]) -> Self;
+pub trait OneResultCracker {
     fn find(&self) -> Option<u32>;
 }
 // Split `old` boolean into separate structs for performance reasons
 pub struct New3Cracker {
     target: [u16; 3],
 }
-impl CertainCracker for New3Cracker {
-    fn new(target: [u16; 3]) -> Self {
+impl New3Cracker {
+    pub fn new(target: [u16; 3]) -> Self {
         Self { target }
     }
-
+}
+impl OneResultCracker for New3Cracker {
     fn find(&self) -> Option<u32> {
         // 30 bits
         (0..=u32::MAX / 4).into_par_iter().find_any(|&i| {
@@ -39,11 +39,12 @@ impl CertainCracker for New3Cracker {
 pub struct Old3Cracker {
     target: [u16; 3],
 }
-impl CertainCracker for Old3Cracker {
-    fn new(target: [u16; 3]) -> Self {
+impl Old3Cracker {
+    pub fn new(target: [u16; 3]) -> Self {
         Self { target }
     }
-
+}
+impl OneResultCracker for Old3Cracker {
     fn find(&self) -> Option<u32> {
         // 31 bits
         (0..=u32::MAX / 2).into_par_iter().find_any(|&i| {
@@ -56,19 +57,19 @@ impl CertainCracker for Old3Cracker {
     }
 }
 
-pub trait UncertainCracker {
-    fn new(target: [u16; 2]) -> Self;
+pub trait MultiResultCracker {
     fn find(&self, tx: &Sender<(u32, bool)>);
 }
 
 pub struct New2Cracker {
     target: [u16; 2],
 }
-impl UncertainCracker for New2Cracker {
-    fn new(target: [u16; 2]) -> Self {
+impl New2Cracker {
+    pub fn new(target: [u16; 2]) -> Self {
         Self { target }
     }
-
+}
+impl MultiResultCracker for New2Cracker {
     fn find(&self, tx: &Sender<(u32, bool)>) {
         (0..=u32::MAX / 4).into_par_iter().for_each(|i| {
             let mut rng = Random::new(i, false);
@@ -83,11 +84,12 @@ impl UncertainCracker for New2Cracker {
 pub struct Old2Cracker {
     target: [u16; 2],
 }
-impl UncertainCracker for Old2Cracker {
-    fn new(target: [u16; 2]) -> Self {
+impl Old2Cracker {
+    pub fn new(target: [u16; 2]) -> Self {
         Self { target }
     }
-
+}
+impl MultiResultCracker for Old2Cracker {
     fn find(&self, tx: &Sender<(u32, bool)>) {
         // 31 bits
         (0..=u32::MAX / 2).into_par_iter().for_each(|i| {
@@ -97,6 +99,32 @@ impl UncertainCracker for Old2Cracker {
                 tx.send((i, true)).unwrap();
             }
         });
+    }
+}
+
+pub struct CollisionCracker {
+    target: u16,
+}
+impl CollisionCracker {
+    pub fn new(target: u16) -> Self {
+        Self { target }
+    }
+    pub fn find(&self, tx: &Sender<u32>) {
+        (0..=u32::MAX / 4).into_par_iter().for_each(|i| {
+            let mut rng_old = Random::new(i, true);
+            // Setting RANDOM= already iterates once
+            rng_old.next_16();
+
+            if rng_old.next_16() == self.target {
+                // Also check new version
+                let mut rng_new = Random::new(i, false);
+                rng_new.next_16();
+
+                if rng_new.next_16() == self.target {
+                    tx.send(i).unwrap();
+                }
+            }
+        })
     }
 }
 

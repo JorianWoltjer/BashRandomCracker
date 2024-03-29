@@ -1,4 +1,5 @@
 /target
+test
 perf*
 flamegraph*
 out

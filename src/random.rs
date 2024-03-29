@@ -1,21 +1,25 @@
-pub const BASH_RAND_MAX: u16 = 0x7fff; // 16 bits
+pub const BASH_RAND_MAX: u16 = 0x7fff; // 15 bits
 
 pub struct Random {
-    seed: u32,
+    pub seed: u32,
     last: u16,
     /// If true, use the old algorithm from bash 5.0 and earlier (check with `bash --version`)
-    old: bool,
+    is_old: bool,
 }
 impl Random {
-    pub fn new(seed: u32, old: bool) -> Self {
+    pub fn new(seed: u32, is_old: bool) -> Self {
         // TODO: support `long` seed input
-        Self { seed, last: 0, old }
+        Self {
+            seed,
+            last: 0,
+            is_old,
+        }
     }
 
     pub fn next_16(&mut self) -> u16 {
-        self.seed = self.next_32();
+        self.next_seed();
 
-        let result = if self.old {
+        let result = if self.is_old {
             // Bash 5.0 and earlier
             self.seed as u16 & BASH_RAND_MAX
         } else {
@@ -30,7 +34,6 @@ impl Random {
             result
         }
     }
-
     pub fn next_16_n(&mut self, n: usize) -> Vec<u16> {
         let mut result = Vec::with_capacity(n);
         for _ in 0..n {
@@ -45,7 +48,7 @@ impl Random {
         }
     }
 
-    fn next_32(&mut self) -> u32 {
+    pub fn next_seed(&mut self) -> u32 {
         if self.seed == 0 {
             self.seed = 123459876;
         }
@@ -55,6 +58,14 @@ impl Random {
         self.seed = if t < 0 { t + 0x7fffffff } else { t } as u32;
 
         self.seed
+    }
+
+    pub fn next_seed_n(&mut self, n: usize) -> Vec<u32> {
+        let mut result = Vec::with_capacity(n);
+        for _ in 0..n {
+            result.push(self.next_seed());
+        }
+        result
     }
 }
 

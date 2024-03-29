@@ -24,7 +24,7 @@ pub enum SubCommands {
         ///
         /// 2 => multiple possible seeds, 3 => single seed
         #[clap(num_args = 2..=3, required = true)]
-        numbers: Vec<String>,
+        numbers: Vec<u16>,
     },
 
     /// Get random numbers from a seed
@@ -35,6 +35,18 @@ pub enum SubCommands {
         /// Skip the first n numbers
         #[arg(short, long, default_value = "0")]
         skip: usize,
+    },
+
+    /// Get next N seeds from a seed
+    Seeds {
+        /// Seed to use for generating random numbers
+        seed: u32,
+    },
+
+    /// Find a seed where both old and new versions are the same
+    Collide {
+        /// Resulting number to target
+        n: u16,
     },
 }
 

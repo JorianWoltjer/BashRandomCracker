@@ -1,6 +1,8 @@
 # Bash `$RANDOM` Cracker
 
-A tool to brute-force the internal seed of Bash's `$RANDOM` variable after only 2-3 samples, in seconds. Able to predict all future values to break the randomness. 
+**Crack Bash's $RANDOM variable to get the internal seed and predict future values, after only 2-3 samples**
+
+This tool brute-forces the internal seed of Bash's `$RANDOM` variable after only 2-3 samples, in seconds. After doing so, you are able to predict all future values to break the randomness of this generator. This can be used to break password/token generation, or other systems that rely on this randomness for security. 
 
 For context, the `bash` shell has a dynamic variable called `$RANDOM` you can access at any time to receive a random 15-bit number:
 
@@ -20,6 +22,14 @@ $ RANDOM=1337; echo $RANDOM $RANDOM $RANDOM
 
 There are **2 different calculations** depending on your **bash version**, which may make one seed give two different outputs.  
 All versions *>= 5.1* will add a small extra step, and to this tool, are considered the "new" versions, while any lower versions are considered "old". This can be set explicitly using the `--version` (`-v`) argument in this tool, or otherwise, it will simply try both. 
+
+## Installation
+
+```Bash
+cargo install bashrand
+```
+
+Or **download** and **extract** a pre-compiled binary from the [Releases](https://github.com/JorianWoltjer/BashRandomCracker/releases) page. 
 
 ## Example
 
@@ -106,14 +116,6 @@ Arguments:
 ```
 
 The subcommands `seeds` and `collide` are for more advanced use, check them out if you want to.
-
-## Installation
-
-```Bash
-cargo install bashrand
-```
-
-Or **download** and **extract** a pre-compiled binary from the [Releases](https://github.com/JorianWoltjer/BashRandomCracker/releases) page. 
 
 ## Reverse Engineering (How?!)
 

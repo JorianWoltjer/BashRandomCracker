@@ -102,6 +102,10 @@ impl MultiResultCracker for Old2Cracker {
     }
 }
 
+pub trait MultiResultVersionCracker {
+    fn find(&self, tx: &Sender<u32>);
+}
+
 pub struct CollisionCracker {
     target: u16,
 }
@@ -109,7 +113,9 @@ impl CollisionCracker {
     pub fn new(target: u16) -> Self {
         Self { target }
     }
-    pub fn find(&self, tx: &Sender<u32>) {
+}
+impl MultiResultVersionCracker for CollisionCracker {
+    fn find(&self, tx: &Sender<u32>) {
         (0..=u32::MAX / 4).into_par_iter().for_each(|i| {
             let mut rng_old = Random::new(i, true);
             // Setting RANDOM= already iterates once
@@ -125,6 +131,50 @@ impl CollisionCracker {
                 }
             }
         })
+    }
+}
+
+pub struct New1Cracker {
+    target: u16,
+}
+impl New1Cracker {
+    pub fn new(target: u16) -> Self {
+        Self { target }
+    }
+}
+impl MultiResultVersionCracker for New1Cracker {
+    fn find(&self, tx: &Sender<u32>) {
+        (0..=u32::MAX / 4).into_par_iter().for_each(|i| {
+            let mut rng = Random::new(i, false);
+            // Setting RANDOM= already iterates once
+            rng.next_16();
+
+            if rng.next_16() == self.target {
+                tx.send(i).unwrap();
+            }
+        });
+    }
+}
+
+pub struct Old1Cracker {
+    target: u16,
+}
+impl Old1Cracker {
+    pub fn new(target: u16) -> Self {
+        Self { target }
+    }
+}
+impl MultiResultVersionCracker for Old1Cracker {
+    fn find(&self, tx: &Sender<u32>) {
+        (0..=u32::MAX / 2).into_par_iter().for_each(|i| {
+            let mut rng = Random::new(i, true);
+            // Setting RANDOM= already iterates once
+            rng.next_16();
+
+            if rng.next_16() == self.target {
+                tx.send(i).unwrap();
+            }
+        });
     }
 }
 

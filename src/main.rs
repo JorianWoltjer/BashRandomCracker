@@ -7,8 +7,8 @@ use bashrand::{
     cli::{Args, SubCommands, Version},
     log,
     random::{Random, BASH_RAND_MAX},
-    CollisionCracker, MultiResultCracker, New2Cracker, New3Cracker, Old2Cracker, Old3Cracker,
-    OneResultCracker, Result,
+    CollisionCracker, MultiResultCracker, MultiResultVersionCracker, New1Cracker, New2Cracker,
+    New3Cracker, Old1Cracker, Old2Cracker, Old3Cracker, OneResultCracker, Result,
 };
 
 fn main() {
@@ -131,15 +131,26 @@ fn do_main(args: Args) -> Result<()> {
 
             log::progress("Searching for seeds...".to_string());
 
-            thread::spawn(move || {
-                let cracker = CollisionCracker::new(n);
-                cracker.find(&tx);
+            thread::spawn(move || match (version_new, version_old) {
+                (true, true) => {
+                    let cracker = CollisionCracker::new(n);
+                    cracker.find(&tx);
+                }
+                (true, false) => {
+                    let cracker = New1Cracker::new(n);
+                    cracker.find(&tx);
+                }
+                (false, true) => {
+                    let cracker = Old1Cracker::new(n);
+                    cracker.find(&tx);
+                }
+                (_, _) => unreachable!("No version selected"),
             });
 
             // Stream all found seeds
             let mut count = 0;
             for seed in rx {
-                println!("Seed: {seed}: {n}");
+                println!("Seed: {seed} = {n}");
                 count += 1;
             }
 

@@ -1,6 +1,8 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
-use bashrand::{CollisionCracker, New3Cracker, Old3Cracker, OneResultCracker};
+use bashrand::{
+    CollisionCracker, MultiResultVersionCracker, New3Cracker, Old3Cracker, OneResultCracker,
+};
 use crossbeam_channel::unbounded;
 
 fn new_bench(c: &mut Criterion) {
